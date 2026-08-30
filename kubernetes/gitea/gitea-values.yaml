@@ -1,7 +1,7 @@
 gitea:
   admin:
     username: gitea-admin
-    password: "***REMOVED***"
+    password: "CHANGE_ME_BEFORE_DEPLOYING"
     email: admin@devops-lab.local
   config:
     database:
