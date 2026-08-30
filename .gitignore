@@ -1,0 +1,17 @@
+﻿*.iso
+*.vhdx
+*.tfstate
+*.tfstate.backup
+.terraform/
+*.tfvars
+!example.tfvars
+*.pem
+*.key
+.vagrant/
+*.retry
+*.pkrvars.hcl
+*.tfvars
+vms/
+packer/output/
+packer/ubuntu-base/packer_cache/
+*.log

@@ -1,0 +1,19 @@
+﻿#cloud-config
+hostname: ${hostname}
+manage_etc_hosts: true
+write_files:
+  - path: /etc/netplan/99-static.yaml
+    permissions: '0600'
+    content: |
+      network:
+        version: 2
+        ethernets:
+          eth0:
+            dhcp4: false
+            addresses: [${ip_address}/24]
+            gateway4: ${gateway}
+            nameservers:
+              addresses: [${dns_servers}]
+runcmd:
+  - netplan apply
+  - systemctl restart systemd-networkd

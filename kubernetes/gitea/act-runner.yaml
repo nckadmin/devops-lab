@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: act-runner
+  namespace: gitea
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: act-runner
+  template:
+    metadata:
+      labels:
+        app: act-runner
+    spec:
+      containers:
+        - name: dind
+          image: docker:dind
+          securityContext:
+            privileged: true
+          env:
+            - name: DOCKER_TLS_CERTDIR
+              value: ""
+          volumeMounts:
+            - name: docker-socket
+              mountPath: /var/run
+
+        - name: act-runner
+          image: gitea/act_runner:latest
+          command: ["sh", "-c"]
+          args:
+            - |
+              while true; do
+                if [ -f .runner ]; then
+                  echo "Already registered, starting daemon"
+                  /usr/local/bin/act_runner daemon
+                else
+                  echo "Registering runner"
+                  /usr/local/bin/act_runner register --no-interactive \
+                    --instance "$GITEA_INSTANCE_URL" \
+                    --token "$GITEA_RUNNER_REGISTRATION_TOKEN" \
+                    --name "$GITEA_RUNNER_NAME"
+                fi
+                echo "act_runner exited, retrying in 5s..."
+                sleep 5
+              done
+          env:
+            - name: DOCKER_HOST
+              value: "unix:///var/run/docker.sock"
+            - name: GITEA_INSTANCE_URL
+              value: "http://gitea-http.gitea.svc.cluster.local:3000"
+            - name: GITEA_RUNNER_REGISTRATION_TOKEN
+              value: "REPLACE_WITH_YOUR_TOKEN"
+            - name: GITEA_RUNNER_NAME
+              value: "k3s-runner-01"
+          volumeMounts:
+            - name: docker-socket
+              mountPath: /var/run
+
+      volumes:
+        - name: docker-socket
+          emptyDir: {}

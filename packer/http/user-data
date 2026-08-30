@@ -1,0 +1,37 @@
+#cloud-config
+autoinstall:
+  version: 1
+  locale: en_US.UTF-8
+  keyboard:
+    layout: us
+  ssh:
+    install-server: true
+    allow-pw: true
+  identity:
+    hostname: ubuntu-base
+    username: devops
+    password: "$6$k5cg8R94o3CAfHxE$RQxsLw3s9nrNgh4EDHCUSxKslmiKdqKIi/74UTde5hn6fQEWINvSgd14blZnJa9zJ8VDS6FVWmO.lRnwkKFZI/"
+  storage:
+    layout:
+      name: direct
+  packages:
+    - openssh-server
+    - qemu-guest-agent
+    - curl
+    - vim
+    - net-tools
+  late-commands:
+    - echo 'devops ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/devops
+  network:
+    network:
+      version: 2
+      ethernets:
+        eth0:
+          dhcp4: false
+          addresses: [192.168.50.201/24]
+          gateway4: 192.168.50.254
+          nameservers:
+            addresses: [8.8.8.8, 1.1.1.1]
+  ssh_import_id: none
+  package_update: true
+  package_upgrade: true

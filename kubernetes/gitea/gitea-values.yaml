@@ -1,0 +1,37 @@
+gitea:
+  admin:
+    username: gitea-admin
+    password: "***REMOVED***"
+    email: admin@devops-lab.local
+  config:
+    database:
+      DB_TYPE: sqlite3
+    session:
+      PROVIDER: memory
+    cache:
+      ADAPTER: memory
+    queue:
+      TYPE: level
+
+extraEnvVars:
+  - name: GITEA__actions__ENABLED
+    value: "true"
+
+postgresql:
+  enabled: false
+postgresql-ha:
+  enabled: false
+redis-cluster:
+  enabled: false
+
+persistence:
+  enabled: true
+  size: 5Gi
+
+service:
+  http:
+    type: NodePort
+    nodePort: 30080
+  ssh:
+    type: NodePort
+    nodePort: 30022
