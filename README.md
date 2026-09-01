@@ -71,4 +71,18 @@ This project was built through hands-on debugging, not a scripted happy path. So
 
 ## Status
 
+Core infrastructure, CI, CD/GitOps, observability, and secrets management are all deployed and verified end-to-end.
+
+## Photo Backup Service (Immich)
+
+Self-hosted Google Photos replacement, deployed as a standard Kubernetes workload:
+
+- **Storage**: uploads persist on a 3.7TB SMB share mounted from the Hyper-V host onto `worker-01`, exposed to the cluster as a `hostPath` PersistentVolume with node affinity. Database and ML model cache use fast local storage (`local-path`) instead, since network storage is a poor fit for database I/O.
+- **Cluster expansion**: `ci-01` (previously idle) was joined as a second k3s worker node via the existing Ansible playbook, and the resource-heavy machine-learning component is pinned there via `nodeSelector`, keeping it off the node serving the database and API.
+- **External access**: exposed through the same OCI VPS used for WireGuard connectivity, via Nginx Proxy Manager with a Let's Encrypt certificate, tunneled back to the home cluster over WireGuard. Mobile app supports automatic local/external endpoint switching based on Wi-Fi SSID.
+- **Security hardening**: nginx rate limiting (`limit_req`) on the login endpoint, plus a custom fail2ban jail that reads the reverse-proxy access log and bans offending IPs at the network level via `nftables`/`DOCKER-USER`. Both layers were validated with a live brute-force test (Kali Linux + Hydra + `rockyou.txt`) — see `security/` for the (secret-free) configuration.
+
+## Next Steps
+
+Alertmanager → Telegram routing by severity, Velero cluster backups, Vault snapshots, storage-capacity alerting for the photo archive, and a third Proxmox-hosted node for control-plane HA.
 Core infrastructure, CI, CD/GitOps, observability, and secrets management are all deployed and verified end-to-end. Planned next steps: second worker node on Proxmox, SSH certificate-based authentication via Vault, and cloud provider practice (AWS/Azure).

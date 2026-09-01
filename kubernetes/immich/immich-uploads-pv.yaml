@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: immich-uploads-pv
+spec:
+  capacity:
+    storage: 1700Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /mnt/immich-data
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - worker-01
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: immich-uploads-pvc
+  namespace: immich
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1700Gi
+  volumeName: immich-uploads-pv
+  storageClassName: ""
