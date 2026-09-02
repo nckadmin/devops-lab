@@ -84,5 +84,24 @@ Self-hosted Google Photos replacement, deployed as a standard Kubernetes workloa
 
 ## Next Steps
 
+## File Storage (Nextcloud)
+
+Self-hosted file storage and collaboration, deployed the same way as Immich — plain Kubernetes manifests, no Helm chart, external access via the same OCI VPS + WireGuard + Nginx Proxy Manager path. Backed by MariaDB and the same 3.7TB SMB share used by Immich (separate folder).
+
+Discovered and fixed a subtle official-image requirement in the process: the Docker image expects the *entire* `/var/www/html` directory to live on one persistent volume (it manages upgrades and internal file structure itself). Splitting `config`/`data` onto separate PVCs — a reasonable-looking optimization — broke the image's own install/upgrade detection logic and caused a persistent crash loop. Consolidating to a single `/var/www/html` PVC resolved it.
+
+## Password Manager (Vaultwarden)
+
+A lightweight, Bitwarden-compatible password manager for storing infrastructure credentials — deliberately kept on local-path storage (no SMB share) to avoid the same class of permission issues encountered with Nextcloud's data directory.
+
+## Security Hardening
+
+Both services are fronted by nginx rate limiting on their login endpoints. Nextcloud additionally relies on its own built-in brute-force throttling (exponential delay per source IP), validated against a live penetration test using Kali Linux and Hydra against Immich's login endpoint, confirmed via reverse-proxy access logs.
+
+## Next Steps
+
+Alertmanager → Telegram routing by severity, Velero cluster backups, Vault snapshots, storage-capacity alerting for the shared photo/file archive, a self-hosted mail server (Grommunio) pending an SMTP relay solution for the VPS's blocked port 25, and a third Proxmox-hosted node for control-plane HA.
+
+
 Alertmanager → Telegram routing by severity, Velero cluster backups, Vault snapshots, storage-capacity alerting for the photo archive, and a third Proxmox-hosted node for control-plane HA.
 Core infrastructure, CI, CD/GitOps, observability, and secrets management are all deployed and verified end-to-end. Planned next steps: second worker node on Proxmox, SSH certificate-based authentication via Vault, and cloud provider practice (AWS/Azure).

@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vaultwarden
+  namespace: vaultwarden
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vaultwarden
+  template:
+    metadata:
+      labels:
+        app: vaultwarden
+    spec:
+      containers:
+        - name: vaultwarden
+          image: vaultwarden/server:latest
+          env:
+            - name: ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef: {name: vaultwarden-secret, key: admin-token}
+            - name: SIGNUPS_ALLOWED
+              value: "true"
+            - name: DOMAIN
+              value: "https://pw.me01.eu"
+            - name: WEBSOCKET_ENABLED
+              value: "true"
+          ports:
+            - containerPort: 80
+            - containerPort: 3012
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: vaultwarden-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vaultwarden
+  namespace: vaultwarden
+spec:
+  type: NodePort
+  selector:
+    app: vaultwarden
+  ports:
+    - name: http
+      port: 80
+      nodePort: 30281
+    - name: websocket
+      port: 3012
+      nodePort: 30282

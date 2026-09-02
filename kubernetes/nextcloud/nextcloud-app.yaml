@@ -1,0 +1,118 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextcloud-db
+  namespace: nextcloud
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nextcloud-db
+  template:
+    metadata:
+      labels:
+        app: nextcloud-db
+    spec:
+      containers:
+        - name: mariadb
+          image: mariadb:11
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: nextcloud-secret, key: mysql-root-password}
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef: {name: nextcloud-secret, key: mysql-database}
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef: {name: nextcloud-secret, key: mysql-user}
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: nextcloud-secret, key: mysql-password}
+          args:
+            - "--transaction-isolation=READ-COMMITTED"
+            - "--binlog-format=ROW"
+          ports:
+            - containerPort: 3306
+          volumeMounts:
+            - name: db-data
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: db-data
+          persistentVolumeClaim:
+            claimName: nextcloud-db-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nextcloud-db
+  namespace: nextcloud
+spec:
+  selector:
+    app: nextcloud-db
+  ports:
+    - port: 3306
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextcloud
+  namespace: nextcloud
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nextcloud
+  template:
+    metadata:
+      labels:
+        app: nextcloud
+    spec:
+      containers:
+        - name: nextcloud
+          image: nextcloud:apache
+          env:
+            - name: MYSQL_HOST
+              value: nextcloud-db
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef: {name: nextcloud-secret, key: mysql-database}
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef: {name: nextcloud-secret, key: mysql-user}
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: nextcloud-secret, key: mysql-password}
+            - name: NEXTCLOUD_ADMIN_USER
+              value: admin
+            - name: NEXTCLOUD_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: nextcloud-secret, key: admin-password}
+            - name: NEXTCLOUD_TRUSTED_DOMAINS
+              value: "cloud.me01.eu"
+            - name: OVERWRITEPROTOCOL
+              value: "https"
+            - name: OVERWRITECLIURL
+              value: "https://cloud.me01.eu"
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: nc-data
+              mountPath: /var/www/html/data
+      volumes:
+        - name: nc-data
+          persistentVolumeClaim:
+            claimName: nextcloud-data-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nextcloud
+  namespace: nextcloud
+spec:
+  type: NodePort
+  selector:
+    app: nextcloud
+  ports:
+    - port: 80
+      nodePort: 30280
