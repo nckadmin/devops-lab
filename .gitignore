@@ -15,3 +15,6 @@ vms/
 packer/output/
 packer/ubuntu-base/packer_cache/
 *.log
+
+# local OCI identifiers
+scripts/capacity-hunter.env
