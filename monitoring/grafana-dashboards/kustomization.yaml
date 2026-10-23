@@ -1,0 +1,9 @@
+namespace: monitoring
+generatorOptions:
+  disableNameSuffixHash: true
+  labels:
+    grafana_dashboard: "1"
+configMapGenerator:
+  - name: grafana-dashboard-node-exporter-full
+    files:
+      - node-exporter-full.json
